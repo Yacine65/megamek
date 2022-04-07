@@ -71,7 +71,7 @@ public class Report implements Serializable {
     private static final int MESSAGE_NONE = -1;
     
     /** Report Type: visible to all players. */
-    public static final int PUBLIC = 0;
+    private static final int PUBLIC = 0;
     
     /**
      * Report Type: visible to all players, but all data marked for obscuration
