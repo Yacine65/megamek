@@ -79,27 +79,27 @@ public class Report implements Serializable {
      * considered <code>obscured</code> unless explicitly marked
      * <code>public</code>.
      */
-    public static final int OBSCURED = 1;
+    private static final int OBSCURED = 1;
     
     /**
      * Report is only visible to those players who can see the subject. Note:
      * Not used at this time, since all reports are considered
      * <code>obscured</code> unless explicitly marked <code>public</code>.
      */
-    public static final int HIDDEN = 2;
+    private static final int HIDDEN = 2;
     
     /** Testing only - remove me later. */
-    public static final int TESTING = 3;
+    protected static final int TESTING = 3;
     
     /**
      * Messages which should be sent only to the player indicated by "player"
      */
-    public static final int PLAYER = 4;
+    private static final int PLAYER = 4;
 
     /**
      * The string that appears in the report to obscure certain information.
      */
-    public static final String OBSCURED_STRING = "????";
+    private static final String OBSCURED_STRING = "????";
 
     /** Number of spaces to use per indentation level. */
     private static final int DEFAULT_INDENTATION = 4;
@@ -110,10 +110,10 @@ public class Report implements Serializable {
     public static final String TOOLTIP_LINK = "#tooltip:";
     
     /** Required - associates this object with its text. */
-    public int messageId = Report.MESSAGE_NONE;
+    protected int messageId = Report.MESSAGE_NONE;
     
     /** The number of spaces this report should be indented. */
-    private int indentation = 0;
+    protected int indentation = 0;
 
     /**
      * The number of newlines to add at the end of this report. Defaults to one.
@@ -121,7 +121,7 @@ public class Report implements Serializable {
     public int newlines = 1;
 
     /** The data values to fill in the report with. */
-    private Vector<String> tagData = new Vector<>();
+    protected Vector<String> tagData = new Vector<>();
 
     /** How to translate the tagData or not at all. */
     private String tagTranslate = null;
@@ -160,13 +160,13 @@ public class Report implements Serializable {
     private Vector<String> obscuredRecipients = new Vector<>();
 
     /** Keep track of what data we have already substituted for tags. */
-    private transient int tagCounter = 0;
+    protected transient int tagCounter = 0;
 
     /** bool for determining when code should be used to show image. */
     private transient boolean showImage = false;
 
     /** string to add to reports to show sprites **/
-    private String imageCode = "";
+    protected String imageCode = "";
 
     /**
      * Default constructor, note that using this means the
@@ -403,11 +403,11 @@ public class Report implements Serializable {
         return tagData.size();
     }
 
-    private String getTag() {
+    public String getTag() {
         return getTag(tagCounter);
     }
 
-    private String getTag(int index) {
+    public String getTag(int index) {
         try {
             String value = tagData.elementAt(index);
             if (value == null) {
@@ -430,110 +430,11 @@ public class Report implements Serializable {
         }
     }
 
-    /**
-     * Get the report in its final form, with all the necessary substitutions
-     * made.
-     *
-     * @return a String with the final report
-     */
-    public String getText() {
-        // The raw text of the message, with tags.
-        String raw = ReportMessages.getString(String.valueOf(messageId));
-
-        // This will be the finished product, with data substituted for tags.
-        StringBuffer text = new StringBuffer();
-
-        if (raw == null) {
-            // Should we handle this better? Check alternate language files?
-            System.out.println("Error: No message found for ID "
-                    + messageId);
-            text.append("[Reporting Error for message ID ").append(
-                    messageId).append("]");
-        } else {
-            int i = 0;
-            int mark = 0;
-            while (i < raw.length()) {
-                if (raw.charAt(i) == '<') {
-                    // find end of tag
-                    int endTagIdx = raw.indexOf('>', i);
-                    if ((raw.indexOf('<', i + 1) != -1)
-                            && (raw.indexOf('<', i + 1) < endTagIdx)) {
-                        // hmm...this must be a literal '<' character
-                        i++;
-                        continue;
-                    }
-                    // copy the preceding characters into the buffer
-                    text.append(raw, mark, i);
-                    if (raw.substring(i + 1, endTagIdx).equals("data")) {
-                        text.append(getTag());
-                        tagCounter++;
-                    } else if (raw.substring(i + 1, endTagIdx).equals("list")) {
-                        for (int j = tagCounter; j < tagData.size(); j++) {
-                            text.append(getTag(j)).append(", ");
-                        }
-                        text.setLength(text.length() - 2); // trim last comma
-                    } else if (raw.substring(i + 1, endTagIdx).startsWith(
-                            "msg:")) {
-                        boolean selector = Boolean.parseBoolean(getTag());
-                        if (selector) {
-                            text.append(ReportMessages.getString(raw.substring(
-                                    i + 5, raw.indexOf(',', i))));
-                        } else {
-                            text.append(ReportMessages.getString(raw.substring(
-                                    raw.indexOf(',', i) + 1, endTagIdx)));
-                        }
-                        tagCounter++;
-                    } else if (raw.substring(i + 1, endTagIdx).equals("newline")) {
-                        text.append("\n");
-                    } else {
-                        // not a special tag, so treat as literal text
-                        text.append(raw, i, endTagIdx + 1);
-                    }
-                    mark = endTagIdx + 1;
-                    i = endTagIdx;
-                }
-                i++;
-            }
-            // add the sprite code at the beginning of the line
-            if (imageCode != null && !imageCode.isEmpty()) {
-                if (text.toString().startsWith("\n")) {
-                    text.insert(1, imageCode);
-                }
-                else {
-                    text.insert(0, imageCode);
-                }
-            }
-            text.append(raw.substring(mark));
-            handleIndentation(text);
-            text.append(getNewlines());
-        }
-        tagCounter = 0;
-        // debugReport
-        if (type == Report.TESTING) {
-            Report.mark(text);
-        }
-        return text.toString();
-    }
-
-    private void handleIndentation(StringBuffer sb) {
-        if ((indentation == 0) || (sb.length() == 0)) {
-            return;
-        }
-        int i = 0;
-        while (sb.substring(i, i+4).equals("\n")) {
-            i+=4;
-            if (i == sb.length()) {
-                continue;
-            }
-        }
-        sb.insert(i, getSpaces());
-    }
-
-    private String getSpaces() {
+    protected String getSpaces() {
         return "&nbsp;".repeat(Math.max(0, indentation));
     }
 
-    private String getNewlines() {
+    protected String getNewlines() {
         return "\n".repeat(Math.max(0, newlines));
     }
 
@@ -599,7 +500,7 @@ public class Report implements Serializable {
     }
 
     // debugReport method
-    private static StringBuffer mark(StringBuffer sb) {
+    protected static StringBuffer mark(StringBuffer sb) {
         sb.insert(0, "<hidden>");
         int i = sb.length() - 1;
         while (sb.charAt(i) == '\n') {
